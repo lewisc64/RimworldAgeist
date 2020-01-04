@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <MentalStateDef ParentName="BaseMentalState">
+    <defName>Seizure</defName>
+    <label>seizing</label>
+    <stateClass>Ageist.MentalState_Seizure</stateClass>
+    <category>Misc</category>
+    <blockNormalThoughts>true</blockNormalThoughts>
+    <beginLetterLabel>seizure</beginLetterLabel>
+    <beginLetter>{0} has had a seizure.</beginLetter>
+    <beginLetterDef>NegativeEvent</beginLetterDef>
+    <baseInspectLine>Mental state: Seizure</baseInspectLine>
+    <unspawnedCanDo>true</unspawnedCanDo>
+  </MentalStateDef>
+</Defs>

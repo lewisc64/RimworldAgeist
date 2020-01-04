@@ -1,0 +1,69 @@
+<Defs>
+  <ThoughtDef>
+    <defName>FearOfTheDark</defName>
+    <workerClass>Ageist.ThoughtWorker_FearOfTheDark</workerClass>
+    <nullifyingTraits>
+      <li>Bloodlust</li>
+    </nullifyingTraits>
+    <stages>
+      <li>
+        <label>afraid of the dark</label>
+        <description>I can't see, I'm not safe!</description>
+        <baseMoodEffect>-10</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+  <ThoughtDef>
+    <defName>DarknessCuriousity</defName>
+    <workerClass>Ageist.ThoughtWorker_FearOfTheDark</workerClass>
+    <requiredTraits>
+      <li>Bloodlust</li>
+    </requiredTraits>
+    <stages>
+      <li>
+        <label>friends in the dark</label>
+        <description>Monsters? Do they feel pain?</description>
+        <baseMoodEffect>10</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+  <ThoughtDef>
+    <defName>FearOfThunder</defName>
+    <workerClass>Ageist.ThoughtWorker_FearOfThunder</workerClass>
+    <stages>
+      <li>
+        <label>afraid of thunder</label>
+        <description>It's loud! I'm going to die!</description>
+        <baseMoodEffect>-12</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+  <ThoughtDef>
+    <defName>FearOfGunfire</defName>
+    <workerClass>Ageist.ThoughtWorker_FearOfGunfire</workerClass>
+    <nullifyingTraits>
+      <li>Bloodlust</li>
+    </nullifyingTraits>
+    <stages>
+      <li>
+        <label>afraid of gunfire</label>
+        <description>What's going on?!</description>
+        <baseMoodEffect>-12</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+  <ThoughtDef>
+    <defName>GunfireExcitement</defName>
+    <workerClass>Ageist.ThoughtWorker_FearOfGunfire</workerClass>
+    <requiredTraits>
+      <li>Bloodlust</li>
+    </requiredTraits>
+    <stages>
+      <li>
+        <label>excited about gunfire</label>
+        <description>Blood is being spilled, I love it!</description>
+        <baseMoodEffect>12</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+</Defs>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <PawnKindDef ParentName="BasePlayerPawnKind">
+    <defName>BabyColonist</defName>
+    <label>baby colonist</label>
+    <defaultFactionType>PlayerColony</defaultFactionType>
+    <backstoryCategories>
+      <li>Civil</li>
+    </backstoryCategories>
+    <chemicalAddictionChance>0</chemicalAddictionChance>
+    <minGenerationAge>0</minGenerationAge>
+    <maxGenerationAge>1</maxGenerationAge>
+    <apparelTags>
+      <li>Spacer</li>
+    </apparelTags>
+    <apparelMoney>
+      <min>1000</min>
+      <max>2400</max>
+    </apparelMoney>
+    <backstoryCryptosleepCommonality>1</backstoryCryptosleepCommonality>
+  </PawnKindDef>
+  <PawnKindDef ParentName="BasePlayerPawnKind">
+    <defName>ToddlerColonist</defName>
+    <label>toddler colonist</label>
+    <defaultFactionType>PlayerColony</defaultFactionType>
+    <backstoryCategories>
+      <li>Civil</li>
+    </backstoryCategories>
+    <chemicalAddictionChance>0</chemicalAddictionChance>
+    <minGenerationAge>1</minGenerationAge>
+    <maxGenerationAge>4</maxGenerationAge>
+    <apparelTags>
+      <li>Spacer</li>
+    </apparelTags>
+    <apparelMoney>
+      <min>1000</min>
+      <max>2400</max>
+    </apparelMoney>
+    <backstoryCryptosleepCommonality>1</backstoryCryptosleepCommonality>
+  </PawnKindDef>
+  <PawnKindDef ParentName="BasePlayerPawnKind">
+    <defName>ChildColonist</defName>
+    <label>child colonist</label>
+    <defaultFactionType>PlayerColony</defaultFactionType>
+    <backstoryCategories>
+      <li>Civil</li>
+    </backstoryCategories>
+    <chemicalAddictionChance>0.01</chemicalAddictionChance>
+    <minGenerationAge>4</minGenerationAge>
+    <maxGenerationAge>13</maxGenerationAge>
+    <apparelTags>
+      <li>Spacer</li>
+    </apparelTags>
+    <apparelMoney>
+      <min>1000</min>
+      <max>2400</max>
+    </apparelMoney>
+    <backstoryCryptosleepCommonality>1</backstoryCryptosleepCommonality>
+  </PawnKindDef>
+  <PawnKindDef ParentName="BasePlayerPawnKind">
+    <defName>TeenagerColonist</defName>
+    <label>teeenager colonist</label>
+    <defaultFactionType>PlayerColony</defaultFactionType>
+    <backstoryCategories>
+      <li>Civil</li>
+    </backstoryCategories>
+    <chemicalAddictionChance>0.08</chemicalAddictionChance>
+    <minGenerationAge>13</minGenerationAge>
+    <maxGenerationAge>17</maxGenerationAge>
+    <apparelTags>
+      <li>Spacer</li>
+    </apparelTags>
+    <apparelMoney>
+      <min>1000</min>
+      <max>2400</max>
+    </apparelMoney>
+    <backstoryCryptosleepCommonality>1</backstoryCryptosleepCommonality>
+  </PawnKindDef>
+</Defs>
