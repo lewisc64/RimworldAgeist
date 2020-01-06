@@ -61,6 +61,69 @@ namespace Ageist
         }
     }
 
+    internal class QueuedPassion : IExposable
+    {
+        private int activationAge; // ticks
+        private bool applied;
+
+        public QueuedPassion()
+        {
+            activationAge = 0;
+            applied = false;
+        }
+
+        public QueuedPassion(int activationAge)
+        {
+            this.activationAge = activationAge;
+            applied = false;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref activationAge, "activationAge");
+            Scribe_Values.Look(ref applied, "applied");
+        }
+
+        public void Apply(Pawn pawn)
+        {
+            Dictionary<SkillRecord, float> weights = new Dictionary<SkillRecord, float>();
+
+            foreach (SkillRecord skill in pawn.skills.skills)
+            {
+                weights[skill] = skill.Level;
+            }
+
+            int tries = 0;
+            SkillRecord increaseSkill = null;
+            while ((increaseSkill == null || increaseSkill.passion == Passion.Major) && ++tries < 300)
+            {
+                increaseSkill = pawn.skills.skills.RandomElementByWeight((skill) => weights[skill]);
+            }
+
+            if (tries >= 300)
+            {
+                Logger.Error($"failed to add passion to {pawn.Name}, skipping passion.");
+                return;
+            }
+
+            increaseSkill.passion = (Passion)((int)increaseSkill.passion + 1);
+
+            Messages.Message("MessageChildGainPassion".Translate(pawn.Name.ToStringShort, increaseSkill.def.skillLabel), pawn, MessageTypeDefOf.PositiveEvent);
+        }
+
+        public void Update(Pawn pawn)
+        {
+            if (!applied)
+            {
+                if (pawn.ageTracker.AgeBiologicalTicks >= activationAge && pawn.Awake() && pawn.MentalStateDef == null)
+                {
+                    Apply(pawn);
+                    applied = true;
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Removes backstories and traits.
     /// Adds "current" backstories.
@@ -77,6 +140,8 @@ namespace Ageist
         private int _currentStage = -1;
         private Age ageTracker = Age.Adult; // lags behind CurrentStage, used to apply growths once only.
 
+        private List<QueuedPassion> queuedPassions = new List<QueuedPassion>();
+
         private List<Fear> knownFears = new List<Fear>();
         private List<Fear> fears = new List<Fear>();
 
@@ -92,7 +157,6 @@ namespace Ageist
                 {
                     return;
                 }
-                loaded = true;
 
                 _currentStage = value;
 
@@ -119,6 +183,7 @@ namespace Ageist
                 LongEventHandler.ExecuteWhenFinished(() => {
                     pawn.Drawer.renderer.graphics.ResolveAllGraphics();
                 });
+                loaded = true;
             }
         }
 
@@ -244,7 +309,10 @@ namespace Ageist
                         $"{preferredName} had a taste of human meat, and enjoyed it.",
                         null));
                 }
+            }
 
+            if (CurrentStage == (int)Age.Teenager)
+            {
                 if (pawn.records.GetValue(RecordDefOf.FiresExtinguished) > 0)
                 {
                     potentialTraits.Add(new Trait(TraitDefOf.Pyromaniac));
@@ -350,8 +418,9 @@ namespace Ageist
             Scribe_Values.Look(ref _currentStage, "_currentStage");
             Scribe_Values.Look(ref ageTracker, "ageTracker");
             Scribe_Values.Look(ref initOnPawn, "initOnPawn");
-            Scribe_Values.Look(ref fears, "fears");
-            Scribe_Values.Look(ref knownFears, "knownFears");
+            Scribe_Collections.Look(ref fears, "fears", LookMode.Value);
+            Scribe_Collections.Look(ref knownFears, "knownFears", LookMode.Value);
+            Scribe_Collections.Look(ref queuedPassions, "queuedPassions", LookMode.Deep);
             base.ExposeData();
         }
 
@@ -368,6 +437,8 @@ namespace Ageist
 
         private void InitOnPawn()
         {
+            Logger.Debug($"initializing on pawn {pawn.Name}");
+
             pawn.story.adulthood = null;
             if (CurrentStage <= (int)Age.Toddler)
             {
@@ -378,10 +449,6 @@ namespace Ageist
             }
             if (CurrentStage <= (int)Age.Child)
             {
-                foreach (SkillRecord skill in pawn.skills.skills)
-                {
-                    skill.passion = Passion.None;
-                }
                 pawn.story.traits.allTraits.Clear();
                 Utils.GiveTrait(pawn, "Wimp");
             }
@@ -393,7 +460,20 @@ namespace Ageist
                     pawn.story.traits.allTraits.Pop();
                 }
             }
-        }
+            knownFears = new List<Fear>();
+            fears = new List<Fear>();
+
+            foreach (SkillRecord skill in pawn.skills.skills)
+            {
+                skill.passion = Passion.None;
+            }
+
+            queuedPassions = new List<QueuedPassion>();
+            for (int i = 0; i < Rand.Range(5, 7); i++)
+            {
+                queuedPassions.Add(new QueuedPassion(Rand.Range(7 * 3600000, 14 * 3600000)));
+            }
+    }
 
         private void UpdateAge()
         {
@@ -470,6 +550,10 @@ namespace Ageist
             base.Tick();
             UpdateAge();
 
+            foreach (QueuedPassion queuedPassion in queuedPassions)
+            {
+                queuedPassion.Update(pawn);
+            }
         }
     }
 }
