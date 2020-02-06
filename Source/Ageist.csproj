@@ -58,8 +58,10 @@
     <Compile Include="Hediff_HumanPregnancy.cs" />
     <Compile Include="Hediff_Seizure.cs" />
     <Compile Include="MentalState_Seizure.cs" />
+    <Compile Include="PawnExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Fears.cs" />
+    <Compile Include="DefCollections.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

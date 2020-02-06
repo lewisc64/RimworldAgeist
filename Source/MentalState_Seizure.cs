@@ -9,7 +9,7 @@ namespace Ageist
         {
             base.PostStart(reason);
             RecoverFromState();
-            pawn.health.AddHediff(HediffDef.Named("Seizure"), Utils.GetBodyPart(pawn, "Brain"));
+            pawn.health.AddHediff(HediffDef.Named("Seizure"), pawn.GetBodyPart("Brain"));
         }
     }
 }

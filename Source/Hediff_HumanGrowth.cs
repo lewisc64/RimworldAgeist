@@ -23,7 +23,7 @@ namespace Ageist
 
         public string GetDescription(Pawn pawn)
         {
-            if (Utils.HasTrait(pawn, this.traitName))
+            if (pawn.HasTrait(traitName))
             {
                 return success;
             }
@@ -109,6 +109,7 @@ namespace Ageist
             increaseSkill.passion = (Passion)((int)increaseSkill.passion + 1);
 
             Messages.Message("MessageChildGainPassion".Translate(pawn.Name.ToStringShort, increaseSkill.def.skillLabel), pawn, MessageTypeDefOf.PositiveEvent);
+            Logger.Info($"{pawn.Name} gained a passion in {increaseSkill.def.skillLabel}.");
         }
 
         public void Update(Pawn pawn)
@@ -139,6 +140,7 @@ namespace Ageist
         private bool initOnPawn = false;
         private int _currentStage = -1;
         private Age ageTracker = Age.Adult; // lags behind CurrentStage, used to apply growths once only.
+        private int skillLevelTracker = 0;
 
         private List<QueuedPassion> queuedPassions = new List<QueuedPassion>();
 
@@ -184,6 +186,19 @@ namespace Ageist
                     pawn.Drawer.renderer.graphics.ResolveAllGraphics();
                 });
                 loaded = true;
+            }
+        }
+
+        private int TotalSkillValue
+        {
+            get
+            {
+                var total = 0;
+                foreach (var skill in pawn.skills.skills)
+                {
+                    total += skill.Level;
+                }
+                return total;
             }
         }
 
@@ -237,7 +252,7 @@ namespace Ageist
         /// <summary>
         /// What did the child do during their childhood? How has it shaped who they are now?
         /// </summary>
-        private void ChildhoodRetrospective(int traits)
+        private void ChildhoodRetrospective(int traits, bool ignoreGenetic = true)
         {
             Logger.Debug($"performing childhood retrospective on {pawn.Name}, trying to increase amount of traits to {traits}.");
             Backstory backstory = new Backstory();
@@ -251,13 +266,13 @@ namespace Ageist
             float humanKills = pawn.records.GetValue(RecordDefOf.KillsHumanlikes);
             float animalKills = pawn.records.GetValue(RecordDefOf.KillsAnimals);
             float animalsTamed = pawn.records.GetValue(RecordDefOf.AnimalsTamed);
-            bool ateHumanMeat = Utils.HadThought(pawn, ThoughtDefOf.AteHumanlikeMeatAsIngredient);
+            bool ateHumanMeat = pawn.HadThought(ThoughtDefOf.AteHumanlikeMeatAsIngredient);
 
             string preferredName = pawn.Name.ToStringShort; // name should remain childhood name, no translation.
 
             if (CurrentStage > (int)Age.Child)
             {
-                if (humanKills >= pawn.ageTracker.AgeBiologicalYears / 3 && !Utils.HasTrait(pawn, "Bloodlust"))
+                if (humanKills >= pawn.ageTracker.AgeBiologicalYears / 3 && !pawn.HasTrait("Bloodlust"))
                 {
                     potentialTraits.Add(new Trait(TraitDefOf.Bloodlust));
                     description.AddFeat(new ChildhoodFeat(
@@ -268,16 +283,16 @@ namespace Ageist
 
                 if (pawn.records.GetValue(RecordDefOf.TimesInMentalState) >= pawn.ageTracker.AgeBiologicalYears)
                 {
-                    if (!Utils.HasTrait(pawn, "Nerves"))
+                    if (!pawn.HasTrait("Nerves"))
                     {
                         potentialTraits.Add(new Trait(TraitDefOf.Nerves, PawnGenerator.RandomTraitDegree(TraitDefOf.Nerves)));
                     }
-                    if (!Utils.HasTrait(pawn, "Neurotic"))
+                    if (!pawn.HasTrait("Neurotic"))
                     {
                         TraitDef def = TraitDef.Named("Neurotic");
                         potentialTraits.Add(new Trait(def, PawnGenerator.RandomTraitDegree(def)));
                     }
-                    if (!Utils.HasTrait(pawn, "Psychopath"))
+                    if (!pawn.HasTrait("Psychopath"))
                     {
                         potentialTraits.Add(new Trait(TraitDefOf.Psychopath));
                         description.AddFeat(new ChildhoodFeat(
@@ -287,12 +302,12 @@ namespace Ageist
                     }
                 }
 
-                if (pawn.records.GetValue(RecordDefOf.CellsMined) > 10 && !Utils.HasTrait(pawn, "Undergrounder"))
+                if (pawn.records.GetValue(RecordDefOf.CellsMined) > 10 && !pawn.HasTrait("Undergrounder"))
                 {
                     potentialTraits.Add(new Trait(TraitDefOf.Undergrounder));
                 }
 
-                if (pawn.records.GetValue(RecordDefOf.ThingsHauled) >= pawn.ageTracker.AgeBiologicalTicks / 60000 * 2 && !Utils.HasTrait(pawn, "Tough"))
+                if (pawn.records.GetValue(RecordDefOf.ThingsHauled) >= pawn.ageTracker.AgeBiologicalTicks / 60000 * 2 && !pawn.HasTrait("Tough"))
                 {
                     description.AddFeat(new ChildhoodFeat(
                         "Tough",
@@ -301,7 +316,7 @@ namespace Ageist
                     potentialTraits.Add(new Trait(TraitDefOf.Tough));
                 }
 
-                if (ateHumanMeat && !Utils.HasTrait(pawn, "Cannibal"))
+                if (ateHumanMeat && !pawn.HasTrait("Cannibal"))
                 {
                     potentialTraits.Add(new Trait(TraitDefOf.Cannibal));
                     description.AddFeat(new ChildhoodFeat(
@@ -323,6 +338,11 @@ namespace Ageist
                 }
             }
 
+            if (pawn.GetAllDrugsTaken().Count() >= 3)
+            {
+                potentialTraits.Add(new Trait(TraitDefOf.DrugDesire, PawnGenerator.RandomTraitDegree(TraitDefOf.DrugDesire)));
+            }
+
             List<TraitDef> invalidExtras = new List<TraitDef> {
                 TraitDefOf.Bloodlust,
                 TraitDefOf.Psychopath,
@@ -331,9 +351,12 @@ namespace Ageist
 
             invalidExtras.AddRange(pawn.story.traits.allTraits.Select(x => x.def));
             invalidExtras.AddRange(potentialTraits.Select(x => x.def));
-            invalidExtras.AddRange(Hediff_HumanPregnancy.geneticTraits);
+            if (ignoreGenetic)
+            {
+                invalidExtras.AddRange(Hediff_HumanPregnancy.geneticTraits);
+            }
 
-            if (Utils.HasBionicPart(pawn))
+            if (pawn.HasBionicPart())
             {
                 invalidExtras.Add(TraitDefOf.BodyPurist); // this would be really annoying otherwise.
             }
@@ -353,12 +376,12 @@ namespace Ageist
                 invalidExtras.Add(TraitDefOf.Brawler);
             }
 
-            List<TraitDef> allDefs = typeof(TraitDefOf)
-                .GetFields(BindingFlags.Static | BindingFlags.Public)
-                .Select(x => x.GetValue(null))
-                .Cast<TraitDef>()
-                .Where(x => !invalidExtras.Contains(x) && x != null)
-                .ToList();
+            if (!pawn.HasTakenAnyDrug())
+            {
+                invalidExtras.Add(TraitDefOf.DrugDesire);
+            }
+
+            TraitDef[] allDefs = DefCollections.Traits.Where(x => !invalidExtras.Contains(x)).ToArray();
 
             // add random traits to the pool for variety.
             int oldCount = potentialTraits.Count;
@@ -374,7 +397,7 @@ namespace Ageist
                     bool conflicts = false;
                     foreach (Trait potential in potentialTraits)
                     {
-                        if (trait.def.ConflictsWith(potential))
+                        if (trait.def == potential.def || trait.def.ConflictsWith(potential))
                         {
                             conflicts = true;
                             break;
@@ -417,6 +440,7 @@ namespace Ageist
         {
             Scribe_Values.Look(ref _currentStage, "_currentStage");
             Scribe_Values.Look(ref ageTracker, "ageTracker");
+            Scribe_Values.Look(ref skillLevelTracker, "skillLevelTracker");
             Scribe_Values.Look(ref initOnPawn, "initOnPawn");
             Scribe_Collections.Look(ref fears, "fears", LookMode.Value);
             Scribe_Collections.Look(ref knownFears, "knownFears", LookMode.Value);
@@ -442,6 +466,7 @@ namespace Ageist
             pawn.story.adulthood = null;
             if (CurrentStage <= (int)Age.Toddler)
             {
+                // do not touch skills assigned by game on older pawns.
                 foreach (SkillRecord skill in pawn.skills.skills)
                 {
                     skill.Level = 0;
@@ -450,7 +475,7 @@ namespace Ageist
             if (CurrentStage <= (int)Age.Child)
             {
                 pawn.story.traits.allTraits.Clear();
-                Utils.GiveTrait(pawn, "Wimp");
+                pawn.HasTrait("Wimp");
             }
             else if (CurrentStage <= (int)Age.Teenager)
             {
@@ -460,20 +485,16 @@ namespace Ageist
                     pawn.story.traits.allTraits.Pop();
                 }
             }
-            knownFears = new List<Fear>();
-            fears = new List<Fear>();
 
             foreach (SkillRecord skill in pawn.skills.skills)
             {
                 skill.passion = Passion.None;
             }
 
+            knownFears = new List<Fear>();
+            fears = new List<Fear>();
             queuedPassions = new List<QueuedPassion>();
-            for (int i = 0; i < Rand.Range(5, 7); i++)
-            {
-                queuedPassions.Add(new QueuedPassion(Rand.Range(7 * 3600000, 14 * 3600000)));
-            }
-    }
+        }
 
         private void UpdateAge()
         {
@@ -510,7 +531,7 @@ namespace Ageist
                         ChildhoodRetrospective(2);
                         break;
                     case Age.Teenager:
-                        if (Utils.HasTrait(pawn, "Wimp"))
+                        if (pawn.HasTrait("Wimp"))
                         {
                             pawn.story.traits.allTraits.Remove(pawn.story.traits.allTraits.First(x => x.def.defName == "Wimp"));
                         }
@@ -528,9 +549,27 @@ namespace Ageist
                 }
                 ageTracker = age;
             }
+        }
 
+        private void UpdatePassions()
+        {
+            if (TotalSkillValue != skillLevelTracker)
+            {
+                var diff = TotalSkillValue - skillLevelTracker;
+                for (int i = 0; i < diff; i++)
+                {
+                    if (Rand.RangeInclusive(1, 7) == 1)
+                    {
+                        queuedPassions.Add(new QueuedPassion());
+                    }
+                }
+                skillLevelTracker += diff;
+            }
 
-
+            foreach (QueuedPassion queuedPassion in queuedPassions)
+            {
+                queuedPassion.Update(pawn);
+            }
         }
 
         public override void PostAdd(DamageInfo? dinfo)
@@ -549,11 +588,7 @@ namespace Ageist
         {
             base.Tick();
             UpdateAge();
-
-            foreach (QueuedPassion queuedPassion in queuedPassions)
-            {
-                queuedPassion.Update(pawn);
-            }
+            UpdatePassions();
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Ageist
 
         protected override ThoughtState CurrentStateInternal(Pawn pawn)
         {
-            Hediff_HumanGrowth diff = Utils.GetHediffObject<Hediff_HumanGrowth>(pawn);
+            Hediff_HumanGrowth diff = pawn.GetHediffObject<Hediff_HumanGrowth>();
             if (diff == null)
             {
                 return false;

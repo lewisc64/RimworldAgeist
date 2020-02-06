@@ -6,6 +6,7 @@ namespace Ageist
 {
     class Hediff_HumanPregnancy : HediffWithComps
     {
+        // Either assign randomly to baby, or use parents. Do before HumanGrowth is added.
         public static TraitDef[] geneticTraits = new[]
         {
             TraitDefOf.SpeedOffset,
